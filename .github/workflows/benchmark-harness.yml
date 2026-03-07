@@ -1,0 +1,40 @@
+name: Benchmark Harness
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: smoke or full
+        required: true
+        default: smoke
+        type: choice
+        options: [smoke, full]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'utils/perf_benchmark_harness.py'
+      - 'Makefile'
+      - '.github/workflows/benchmark-harness.yml'
+      - 'docs/Benchmark-Harness.md'
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Run smoke benchmark entrypoint
+        if: ${{ github.event_name == 'pull_request' || inputs.mode == 'smoke' }}
+        run: make benchmark-smoke
+
+      - name: Run full benchmark entrypoint
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'full' }}
+        run: make benchmark-full
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-artifacts
+          path: artifacts
