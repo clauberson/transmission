@@ -84,6 +84,9 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument("--phase-timeout-seconds", type=int, default=1800, help="Timeout per phase")
+    parser.add_argument("--tc-netem-script", default="./utils/tc_netem_profiles.py", help="Script used to apply tc/netem profiles")
+    parser.add_argument("--scenario-d-netem-profile", choices=["profile_1", "profile_2", "profile_3"], help="Apply tc/netem profile only for scenario D")
+    parser.add_argument("--tc-interface", help="Network interface used by tc/netem when scenario D profile is enabled")
     parser.add_argument("--force", action="store_true", help="Overwrite existing run directories")
     return parser.parse_args()
 
@@ -126,6 +129,20 @@ def run_phase(*, cmd: str, env: dict[str, str], timeout_seconds: int, cwd: Path)
     return completed.returncode, payload, completed.stdout, completed.stderr
 
 
+
+def run_netem_script(*, script: str, command: str, profile: str | None, interface: str, cwd: Path) -> tuple[int, str, str]:
+    args = [script, command, "--interface", interface]
+    if profile is not None:
+        args.extend(["--profile", profile])
+    completed = subprocess.run(
+        args,
+        cwd=cwd,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    return completed.returncode, completed.stdout, completed.stderr
+
 def aggregate(run_results: list[RunResult], output_root: Path) -> dict[str, Any]:
     summary_runs: list[dict[str, Any]] = []
     for run in run_results:
@@ -165,6 +182,9 @@ def main() -> int:
     if args.n <= 0:
         print("error: N must be > 0", file=sys.stderr)
         return EXIT_INVALID_ARGS
+    if args.scenario_d_netem_profile and not args.tc_interface:
+        print("error: --tc-interface is required when --scenario-d-netem-profile is set", file=sys.stderr)
+        return EXIT_INVALID_ARGS
 
     output_root = Path(args.output_root)
     run_id = args.run_id or now_run_id()
@@ -196,47 +216,78 @@ def main() -> int:
         scenario_n = args.n * factor
         profile = NETWORK_PROFILES[args.network_profile]
         phases: list[PhaseResult] = []
+        netem_applied = False
 
-        for phase_name, phase_seconds in (("warmup", warmup_seconds), ("measurement", measure_seconds)):
-            env = os.environ.copy()
-            env.update(
-                {
-                    "TR_BENCH_MODE": args.mode,
-                    "TR_BENCH_SCENARIO": scenario,
-                    "TR_BENCH_SCENARIO_FACTOR": str(factor),
-                    "TR_BENCH_NETWORK_PROFILE": args.network_profile,
-                    "TR_BENCH_NETWORK_PROFILE_JSON": json.dumps(profile),
-                    "TR_BENCH_PHASE": phase_name,
-                    "TR_BENCH_PHASE_SECONDS": str(phase_seconds),
-                    "TR_BENCH_N": str(scenario_n),
-                    "TR_BENCH_RUN_ID": run_id,
-                    "TR_BENCH_OUTPUT_DIR": str(scenario_dir),
-                    "TR_BENCH_SEED": str(args.seed),
-                }
-            )
-
-            try:
-                code, payload, stdout, stderr = run_phase(
-                    cmd=args.phase_command,
-                    env=env,
-                    timeout_seconds=args.phase_timeout_seconds,
+        try:
+            if scenario == "D" and args.scenario_d_netem_profile:
+                apply_code, netem_stdout, netem_stderr = run_netem_script(
+                    script=args.tc_netem_script,
+                    command="apply",
+                    profile=args.scenario_d_netem_profile,
+                    interface=args.tc_interface,
                     cwd=Path.cwd(),
                 )
-            except subprocess.TimeoutExpired:
-                print(f"error: {scenario} {phase_name} timed out after {args.phase_timeout_seconds}s", file=sys.stderr)
-                return EXIT_PHASE_TIMEOUT
+                (scenario_dir / "netem-setup.log").write_text(netem_stdout)
+                (scenario_dir / "netem-setup.err").write_text(netem_stderr)
+                if apply_code != 0:
+                    print(f"error: failed to apply netem for scenario D (exit={apply_code})", file=sys.stderr)
+                    return EXIT_SETUP_FAILED
+                netem_applied = True
 
-            phase_metrics = payload if isinstance(payload, dict) else {}
-            phases.append(PhaseResult(phase=phase_name, duration_seconds=phase_seconds, exit_code=code, metrics=phase_metrics))
+            for phase_name, phase_seconds in (("warmup", warmup_seconds), ("measurement", measure_seconds)):
+                env = os.environ.copy()
+                env.update(
+                    {
+                        "TR_BENCH_MODE": args.mode,
+                        "TR_BENCH_SCENARIO": scenario,
+                        "TR_BENCH_SCENARIO_FACTOR": str(factor),
+                        "TR_BENCH_NETWORK_PROFILE": args.network_profile,
+                        "TR_BENCH_NETWORK_PROFILE_JSON": json.dumps(profile),
+                        "TR_BENCH_PHASE": phase_name,
+                        "TR_BENCH_PHASE_SECONDS": str(phase_seconds),
+                        "TR_BENCH_N": str(scenario_n),
+                        "TR_BENCH_RUN_ID": run_id,
+                        "TR_BENCH_OUTPUT_DIR": str(scenario_dir),
+                        "TR_BENCH_SEED": str(args.seed),
+                    }
+                )
 
-            log_path = scenario_dir / f"{phase_name}.log"
-            err_path = scenario_dir / f"{phase_name}.err"
-            log_path.write_text(stdout)
-            err_path.write_text(stderr)
+                try:
+                    code, payload, stdout, stderr = run_phase(
+                        cmd=args.phase_command,
+                        env=env,
+                        timeout_seconds=args.phase_timeout_seconds,
+                        cwd=Path.cwd(),
+                    )
+                except subprocess.TimeoutExpired:
+                    print(f"error: {scenario} {phase_name} timed out after {args.phase_timeout_seconds}s", file=sys.stderr)
+                    return EXIT_PHASE_TIMEOUT
 
-            if code != 0:
-                print(f"error: scenario {scenario} failed during {phase_name} (exit={code})", file=sys.stderr)
-                return EXIT_WARMUP_FAILED if phase_name == "warmup" else EXIT_MEASURE_FAILED
+                phase_metrics = payload if isinstance(payload, dict) else {}
+                phases.append(PhaseResult(phase=phase_name, duration_seconds=phase_seconds, exit_code=code, metrics=phase_metrics))
+
+                log_path = scenario_dir / f"{phase_name}.log"
+                err_path = scenario_dir / f"{phase_name}.err"
+                log_path.write_text(stdout)
+                err_path.write_text(stderr)
+
+                if code != 0:
+                    print(f"error: scenario {scenario} failed during {phase_name} (exit={code})", file=sys.stderr)
+                    return EXIT_WARMUP_FAILED if phase_name == "warmup" else EXIT_MEASURE_FAILED
+        finally:
+            if scenario == "D" and args.scenario_d_netem_profile and args.tc_interface and netem_applied:
+                teardown_code, td_stdout, td_stderr = run_netem_script(
+                    script=args.tc_netem_script,
+                    command="teardown",
+                    profile=None,
+                    interface=args.tc_interface,
+                    cwd=Path.cwd(),
+                )
+                (scenario_dir / "netem-teardown.log").write_text(td_stdout)
+                (scenario_dir / "netem-teardown.err").write_text(td_stderr)
+                if teardown_code != 0:
+                    print(f"error: failed to teardown netem for scenario D (exit={teardown_code})", file=sys.stderr)
+                    return EXIT_SETUP_FAILED
 
         metrics_doc = {
             "schema_version": 1,
@@ -246,6 +297,8 @@ def main() -> int:
             "N": scenario_n,
             "seed": args.seed,
             "phases": [dataclasses.asdict(phase) for phase in phases],
+            "netem_profile": args.scenario_d_netem_profile if scenario == "D" else None,
+            "netem_interface": args.tc_interface if scenario == "D" else None,
         }
         (scenario_dir / "metrics.json").write_text(json.dumps(metrics_doc, indent=2) + "\n")
 

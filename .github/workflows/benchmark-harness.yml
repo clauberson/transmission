@@ -13,6 +13,8 @@ on:
     branches: [main]
     paths:
       - 'utils/perf_benchmark_harness.py'
+      - 'utils/tc_netem_profiles.py'
+      - 'tests/utils/test_tc_netem_profiles.py'
       - 'Makefile'
       - '.github/workflows/benchmark-harness.yml'
       - 'docs/Benchmark-Harness.md'
