@@ -854,6 +854,8 @@ private:
         {
             tr_announcerAddBytes(tor, TR_ANN_DOWN, tor->piece_size(piece));
         }
+
+        tor->session->on_piece_completed(tor->id(), piece);
     }
 
     void on_got_bad_piece(tr_piece_index_t piece)
@@ -932,6 +934,7 @@ private:
                 auto const loc_begin = tor->piece_loc(event.pieceIndex, event.offset);
                 auto const loc_end = tor->piece_loc(event.pieceIndex, event.offset, event.length);
                 auto const span = tr_block_span_t{ .begin = loc_begin.block, .end = loc_end.block };
+                tor->session->on_request_sent(tor->id(), event.pieceIndex, span);
                 s->sent_request(tor, peer, span);
             }
             break;
@@ -952,6 +955,7 @@ private:
                 peer->blocks_sent_to_client.add(tr_time(), 1);
                 peer->blame.set(loc.piece);
                 s->got_block(tor, loc.block); // put this line before calling tr_torrent callback
+                tor->session->on_block_received(tor->id(), loc.block);
                 tor->on_block_received(loc.block);
             }
             break;

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://transmissionbt.com/schemas/perf-metrics-1.json",
+  "title": "Transmission performance metrics",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "timestamp",
+    "labels",
+    "throughput",
+    "piece_completion_latency_ms",
+    "request_queue_latency_ms",
+    "main_loop_jitter_ms",
+    "cpu_percent",
+    "rss_bytes"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "labels": {
+      "type": "object",
+      "required": ["scenario_id", "run_id", "commit_sha"],
+      "properties": {
+        "scenario_id": { "type": "string" },
+        "run_id": { "type": "string" },
+        "commit_sha": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "throughput": {
+      "type": "object",
+      "required": ["download_bps", "upload_bps"],
+      "properties": {
+        "download_bps": { "type": "number" },
+        "upload_bps": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "piece_completion_latency_ms": { "$ref": "#/$defs/pct" },
+    "request_queue_latency_ms": { "$ref": "#/$defs/pct" },
+    "main_loop_jitter_ms": { "$ref": "#/$defs/pct" },
+    "cpu_percent": {
+      "type": "object",
+      "required": ["avg", "peak"],
+      "properties": {
+        "avg": { "type": "number" },
+        "peak": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "rss_bytes": {
+      "type": "object",
+      "required": ["avg", "peak"],
+      "properties": {
+        "avg": { "type": "number" },
+        "peak": { "type": "number" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "pct": {
+      "type": "object",
+      "required": ["p50", "p95", "p99"],
+      "properties": {
+        "p50": { "type": "number" },
+        "p95": { "type": "number" },
+        "p99": { "type": "number" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

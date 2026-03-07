@@ -98,6 +98,8 @@ target_sources(${TR_NAME}
         peer-msgs.h
         peer-socket.cc
         peer-socket.h
+        perf-metrics.cc
+        perf-metrics.h
         platform.cc
         platform.h
         port-forwarding-natpmp.cc
