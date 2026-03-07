@@ -39,6 +39,66 @@ Harness reproduzível para execução de cenários de benchmark do Transmission 
 
 O perfil selecionado é exposto para o comando de fase via `TR_BENCH_NETWORK_PROFILE` e `TR_BENCH_NETWORK_PROFILE_JSON`.
 
+
+### Netem/tc para cenário D
+
+Use `utils/tc_netem_profiles.py` para aplicar perfis de rede apenas no cenário `D` com setup/teardown seguro:
+
+```bash
+./utils/perf_benchmark_harness.py \
+  --mode smoke \
+  --scenarios D \
+  --scenario-d-netem-profile profile_2 \
+  --tc-interface eth0
+```
+
+Perfis disponíveis:
+
+- `profile_1`: 80 mbit, RTT 70 ms, jitter 6 ms, perda 0.2%
+- `profile_2`: 25 mbit, RTT 140 ms, jitter 16 ms, perda 1.0%
+- `profile_3`: 8 mbit, RTT 260 ms, jitter 35 ms, perda 2.2%
+
+Cada execução de cenário `D` gera logs dedicados com os parâmetros esperados e medidos:
+
+- `netem-setup.log` / `netem-setup.err`
+- `netem-teardown.log` / `netem-teardown.err`
+
+### Validação automatizada dos parâmetros ativos
+
+Aplicar + validar:
+
+```bash
+sudo ./utils/tc_netem_profiles.py apply --profile profile_1 --interface eth0
+```
+
+Validação isolada:
+
+```bash
+sudo ./utils/tc_netem_profiles.py validate --profile profile_1 --interface eth0
+```
+
+Reversão segura:
+
+```bash
+sudo ./utils/tc_netem_profiles.py teardown --interface eth0
+```
+
+O comando `validate` compara banda, RTT, jitter e perda com tolerâncias pequenas e retorna código não-zero em divergência.
+
+### Troubleshooting (runners sem privilégios)
+
+Erros comuns em CI sem privilégios:
+
+1. `tc` ausente (`iproute2` não instalado).
+2. runner sem `root`/`CAP_NET_ADMIN`.
+3. kernel sem suporte a `netem`.
+
+Fallback recomendado:
+
+- Execute o benchmark sem `--scenario-d-netem-profile`; os cenários continuam rodando com o perfil lógico (`TR_BENCH_NETWORK_PROFILE`) sem alteração real de qdisc.
+- Em pipelines sem privilégios, mantenha a validação de performance ativa e marque a etapa de netem como `skipped`/`informational`.
+- Para validação real de `tc/netem`, use runner self-hosted com `CAP_NET_ADMIN` e interface dedicada para teste.
+
 ## Estrutura de saída
 
 Para cada cenário executado:
