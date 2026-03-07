@@ -886,14 +886,46 @@ public:
         return session_stats_;
     }
 
-    constexpr void add_uploaded(uint32_t n_bytes) noexcept
+    void add_uploaded(uint32_t n_bytes) noexcept
     {
         stats().add_uploaded(n_bytes);
+        if (perf_metrics_)
+        {
+            perf_metrics_->add_uploaded(n_bytes);
+        }
     }
 
-    constexpr void add_downloaded(uint32_t n_bytes) noexcept
+    void add_downloaded(uint32_t n_bytes) noexcept
     {
         stats().add_downloaded(n_bytes);
+        if (perf_metrics_)
+        {
+            perf_metrics_->add_downloaded(n_bytes);
+        }
+    }
+
+    void on_request_sent(tr_torrent_id_t tor_id, tr_piece_index_t piece, tr_block_span_t span)
+    {
+        if (perf_metrics_)
+        {
+            perf_metrics_->on_request_sent(tor_id, piece, span);
+        }
+    }
+
+    void on_block_received(tr_torrent_id_t tor_id, tr_block_index_t block)
+    {
+        if (perf_metrics_)
+        {
+            perf_metrics_->on_block_received(tor_id, block);
+        }
+    }
+
+    void on_piece_completed(tr_torrent_id_t tor_id, tr_piece_index_t piece)
+    {
+        if (perf_metrics_)
+        {
+            perf_metrics_->on_piece_completed(tor_id, piece);
+        }
     }
 
     constexpr void add_file_created() noexcept
@@ -1479,6 +1511,9 @@ private:
 
     // depends-on: alt_speeds_, udp_core_, torrents_
     std::unique_ptr<tr::Timer> now_timer_;
+
+    // depends-on: settings_, session_thread_
+    std::unique_ptr<tr_perf_metrics> perf_metrics_;
 
     // depends-on: torrents_
     std::unique_ptr<tr::Timer> queue_timer_;

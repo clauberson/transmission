@@ -18,3 +18,13 @@ Users can set environmental variables to override Transmission's default behavio
 
 ## Standard Variables Used by Other Tools
  * Transmission uses the [libcurl](https://curl.haxx.se/libcurl/) library for HTTP- and HTTPS-based tracker announces and scrapes. Transmission does not support proxies, but libcurl itself honors [a handful of environment variables](https://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPROXY) to customize _its_ proxy behavior.
+
+
+### Performance instrumentation
+
+- `TR_PERF_METRICS_ENABLED`: Set to `1` to enable runtime performance metrics collection (default: disabled).
+- `TR_PERF_METRICS_OUTPUT_FILE`: JSONL output path for emitted samples.
+- `TR_PERF_METRICS_INTERVAL_SECONDS`: Emit interval in seconds (default: `5`).
+- `TR_PERF_METRICS_SCENARIO_ID`: Scenario label added to each sample.
+- `TR_PERF_METRICS_RUN_ID`: Run label added to each sample.
+- `TR_PERF_METRICS_COMMIT_SHA`: Commit SHA label added to each sample.

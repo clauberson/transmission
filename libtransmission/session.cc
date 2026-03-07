@@ -44,6 +44,7 @@
 #include "libtransmission/net.h"
 #include "libtransmission/peer-mgr.h"
 #include "libtransmission/peer-socket.h"
+#include "libtransmission/perf-metrics.h"
 #include "libtransmission/port-forwarding.h"
 #include "libtransmission/quark.h"
 #include "libtransmission/rpc-server.h"
@@ -611,6 +612,12 @@ void tr_session::on_now_timer()
 {
     TR_ASSERT(now_timer_);
     auto const now = std::chrono::system_clock::now();
+    auto const now_steady = std::chrono::steady_clock::now();
+
+    if (perf_metrics_)
+    {
+        perf_metrics_->on_main_loop_tick(now, now_steady);
+    }
 
     // tr_session upkeep tasks to perform once per second
     tr_timeUpdate(std::chrono::system_clock::to_time_t(now));
@@ -729,6 +736,11 @@ void tr_session::on_save_timer()
 
     stats().save();
     torrent_queue().to_file();
+
+    if (perf_metrics_)
+    {
+        perf_metrics_->flush(std::chrono::system_clock::now());
+    }
 }
 
 void tr_session::initImpl(init_data& data)
@@ -2190,6 +2202,7 @@ tr_session::tr_session(std::string_view config_dir, tr_variant const& settings_d
     , peer_mgr_{ tr_peerMgrNew(this), &tr_peerMgrFree }
     , rpc_server_{ std::make_unique<tr_rpc_server>(this, tr_rpc_server::Settings{ settings_dict }) }
     , now_timer_{ timer_maker_->create([this]() { on_now_timer(); }) }
+    , perf_metrics_{ tr_perf_metrics::maybe_create(*this) }
     , queue_timer_{ timer_maker_->create([this]() { on_queue_timer(); }) }
     , save_timer_{ timer_maker_->create([this]() { on_save_timer(); }) }
 {
