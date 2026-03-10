@@ -31,6 +31,9 @@ Much of this documentation is out-of-date or could be improved. Pull requests ar
  * [RPC protocol specification](rpc-spec.md)
  * [Transmission's Peer ID and User-Agent headers](Peer-ID-and-User-Agent.md)
  * [Peer status text explained](Peer-Status-Text.md)
+ * [Playbook de decisão de release baseado em performance](Performance-Release-Governance.md)
+ * [Template de waiver de performance](templates/performance-waiver-template.md)
+ * [Checklist pré-release de performance](checklists/performance-pre-release-checklist.md)
  * [Securing Transmission's RPC interface with an open-source reverse proxy (External Link)](https://www.pomerium.com/docs/guides/transmission)
 
 # 3. Report a problem / request a feature #
