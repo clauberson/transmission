@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "kpis": {
+    "download_bps": {
+      "direction": "higher_is_better",
+      "warn_percent": 3.0,
+      "critical_percent": 7.0,
+      "alpha_warn": 0.1,
+      "alpha_critical": 0.05
+    },
+    "upload_bps": {
+      "direction": "higher_is_better",
+      "warn_percent": 3.0,
+      "critical_percent": 7.0,
+      "alpha_warn": 0.1,
+      "alpha_critical": 0.05
+    },
+    "cpu_avg": {
+      "direction": "lower_is_better",
+      "warn_percent": 3.0,
+      "critical_percent": 7.0,
+      "alpha_warn": 0.1,
+      "alpha_critical": 0.05
+    },
+    "cpu_peak": {
+      "direction": "lower_is_better",
+      "warn_percent": 3.0,
+      "critical_percent": 7.0,
+      "alpha_warn": 0.1,
+      "alpha_critical": 0.05
+    },
+    "rss_avg": {
+      "direction": "lower_is_better",
+      "warn_percent": 3.0,
+      "critical_percent": 7.0,
+      "alpha_warn": 0.1,
+      "alpha_critical": 0.05
+    },
+    "rss_peak": {
+      "direction": "lower_is_better",
+      "warn_percent": 3.0,
+      "critical_percent": 7.0,
+      "alpha_warn": 0.1,
+      "alpha_critical": 0.05
+    }
+  }
+}

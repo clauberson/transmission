@@ -35,12 +35,31 @@ class PerfBaselineToolingTests(unittest.TestCase):
         self.assertEqual(metrics["A"]["download_bps"], 100.0)
         self.assertEqual(metrics["D"]["rss_peak"], 10.0)
 
-    def test_compare_flags_regression(self) -> None:
-        current = {"A": {"download_bps": 90.0, "cpu_avg": 9.0}}
-        baseline = {"metrics": {"A": {"download_bps": 100.0, "cpu_avg": 8.0}}}
-        result = COMPARE.compare(current, baseline)
-        self.assertEqual(result["A"]["download_bps"]["status"], "regression")
-        self.assertEqual(result["A"]["cpu_avg"]["status"], "regression")
+    def test_compare_classifies_regression_improvement_and_inconclusive(self) -> None:
+        current = {
+            "A": {"download_bps": [80.0] * 8},
+            "B": {"cpu_avg": [8.0] * 8},
+            "C": {"rss_avg": [110.0]},
+        }
+        baseline = {
+            "metrics": {
+                "A": {"download_bps": [100.0] * 8},
+                "B": {"cpu_avg": [10.0] * 8},
+                "C": {"rss_avg": [100.0]},
+            }
+        }
+
+        report = COMPARE.compare_source(source_name="primary", current=current, baseline=baseline, rules=COMPARE.DEFAULT_RULES)
+        by_key = {(row["scenario"], row["metric"]): row for row in report["rows"]}
+
+        self.assertEqual(by_key[("A", "download_bps")]["severity"], "Critical")
+        self.assertEqual(by_key[("A", "download_bps")]["decision"], "regression")
+
+        self.assertEqual(by_key[("B", "cpu_avg")]["severity"], "Info")
+        self.assertEqual(by_key[("B", "cpu_avg")]["decision"], "improvement")
+
+        self.assertEqual(by_key[("C", "rss_avg")]["severity"], "Info")
+        self.assertEqual(by_key[("C", "rss_avg")]["decision"], "inconclusive")
 
     def test_update_main_keeps_commit_window(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

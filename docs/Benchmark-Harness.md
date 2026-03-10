@@ -188,7 +188,13 @@ Script: `utils/perf_compare_baseline.py`
 
 - Lê `perf-baseline/manifest.json`.
 - Resolve baseline primário/secundário automaticamente.
-- Compara o `artifacts/summary.json` contra ambos e grava `artifacts/baseline-comparison.json`.
+- Compara o `artifacts/summary.json` contra ambos usando:
+  - variação percentual por KPI (mediana current vs mediana baseline);
+  - teste não-paramétrico de Mann-Whitney (two-sided) para significância.
+- Classifica cada KPI em `Info`/`Warn`/`Critical` com regras configuráveis em `perf-baseline/kpi-rules.json` (`thresholds` + `alpha`).
+- Gera dois artefatos para CI/comentário automático em PR:
+  - `artifacts/baseline-comparison.json`
+  - `artifacts/baseline-comparison.md`
 
 No workflow de benchmark (`.github/workflows/benchmark-harness.yml`) essa comparação roda após o benchmark.
 
