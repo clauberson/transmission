@@ -117,3 +117,22 @@ target_link_libraries(subprocess-test
 
 add_dependencies(libtransmission-test
     subprocess-test)
+
+add_executable(libtransmission-microbench)
+
+target_sources(libtransmission-microbench
+    PRIVATE
+        microbench-hotpaths.cc)
+
+set_property(
+    TARGET libtransmission-microbench
+    PROPERTY FOLDER "tests")
+
+target_compile_definitions(libtransmission-microbench
+    PRIVATE
+        __TRANSMISSION__)
+
+target_link_libraries(libtransmission-microbench
+    PRIVATE
+        ${TR_NAME}
+        transmission::fmt-header-only)

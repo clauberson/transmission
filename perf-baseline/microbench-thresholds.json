@@ -1,0 +1,34 @@
+{
+  "benchmarks": {
+    "piece_picker.wishlist_next": {
+      "max_ns_per_op": 60000,
+      "max_allocations_per_op": 8,
+      "max_bytes_per_op": 2200,
+      "max_commit_delta_pct": 15
+    },
+    "peer_selection.from_compact_ipv4": {
+      "max_ns_per_op": 30000,
+      "max_allocations_per_op": 2,
+      "max_bytes_per_op": 12000,
+      "max_commit_delta_pct": 12
+    },
+    "buffers.stackbuffer_rw": {
+      "max_ns_per_op": 25000,
+      "max_allocations_per_op": 0.2,
+      "max_bytes_per_op": 200,
+      "max_commit_delta_pct": 10
+    },
+    "crypto.sha1_16k": {
+      "max_ns_per_op": 150000,
+      "max_allocations_per_op": 0.2,
+      "max_bytes_per_op": 128,
+      "max_commit_delta_pct": 10
+    },
+    "rpc.json_parse_method_lookup": {
+      "max_ns_per_op": 35000,
+      "max_allocations_per_op": 7,
+      "max_bytes_per_op": 2200,
+      "max_commit_delta_pct": 15
+    }
+  }
+}
