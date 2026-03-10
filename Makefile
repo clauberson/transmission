@@ -1,4 +1,4 @@
-.PHONY: benchmark-smoke benchmark-full benchmark-compare-baseline benchmark-dashboard baseline-update-release baseline-update-main
+.PHONY: benchmark-smoke benchmark-full benchmark-compare-baseline benchmark-dashboard baseline-update-release baseline-update-main microbench microbench-compare
 
 BENCHMARK_HARNESS ?= ./utils/perf_benchmark_harness.py
 BENCHMARK_OUTPUT_ROOT ?= artifacts
@@ -12,6 +12,31 @@ PERF_BASELINE_REASON ?= rotina
 PERF_BASELINE_COMMIT ?= unknown
 PERF_BASELINE_RELEASE ?= v0.0.0
 PERF_BASELINE_RUN_ID ?= manual
+MICROBENCH_BUILD_DIR ?= build
+MICROBENCH_OUTPUT ?= artifacts/microbench-summary.json
+MICROBENCH_COMPARE_JSON ?= artifacts/microbench-comparison.json
+MICROBENCH_COMPARE_MD ?= artifacts/microbench-comparison.md
+MICROBENCH_THRESHOLDS ?= perf-baseline/microbench-thresholds.json
+MICROBENCH_BASELINE ?=
+MICROBENCH_REPEATS ?= 12
+MICROBENCH_ITERATIONS ?= 800
+
+microbench:
+	cmake -S . -B $(MICROBENCH_BUILD_DIR)
+	cmake --build $(MICROBENCH_BUILD_DIR) --target libtransmission-microbench
+	$(MICROBENCH_BUILD_DIR)/tests/libtransmission/libtransmission-microbench \
+		--output $(MICROBENCH_OUTPUT) \
+		--commit $(PERF_BASELINE_COMMIT) \
+		--repeats $(MICROBENCH_REPEATS) \
+		--iterations $(MICROBENCH_ITERATIONS)
+
+microbench-compare:
+	./utils/microbench_compare.py \
+		--current $(MICROBENCH_OUTPUT) \
+		--thresholds $(MICROBENCH_THRESHOLDS) \
+		--output-json $(MICROBENCH_COMPARE_JSON) \
+		--output-md $(MICROBENCH_COMPARE_MD) \
+		$(if $(MICROBENCH_BASELINE),--baseline $(MICROBENCH_BASELINE),)
 
 benchmark-smoke:
 	$(BENCHMARK_HARNESS) \

@@ -2,6 +2,8 @@
 
 Harness reproduzível para execução de cenários de benchmark do Transmission com fases de **warm-up** e **medição**.
 
+Para microbenchmarks de hot paths (piece picker, peer selection, buffers, crypto e RPC), veja `docs/Microbenchmark-Hotpaths.md`.
+
 ## Script principal
 
 - `utils/perf_benchmark_harness.py`
