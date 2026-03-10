@@ -1,4 +1,4 @@
-.PHONY: benchmark-smoke benchmark-full benchmark-compare-baseline baseline-update-release baseline-update-main
+.PHONY: benchmark-smoke benchmark-full benchmark-compare-baseline benchmark-dashboard baseline-update-release baseline-update-main
 
 BENCHMARK_HARNESS ?= ./utils/perf_benchmark_harness.py
 BENCHMARK_OUTPUT_ROOT ?= artifacts
@@ -33,7 +33,15 @@ benchmark-compare-baseline:
 	./utils/perf_compare_baseline.py \
 		--summary $(BENCHMARK_OUTPUT_ROOT)/summary.json \
 		--baseline-root $(PERF_BASELINE_ROOT) \
-		--output $(BENCHMARK_OUTPUT_ROOT)/baseline-comparison.json
+		--output-json $(BENCHMARK_OUTPUT_ROOT)/baseline-comparison.json \
+		--output-md $(BENCHMARK_OUTPUT_ROOT)/baseline-comparison.md
+
+benchmark-dashboard:
+	./utils/perf_dashboard.py \
+		--artifacts-root $(BENCHMARK_OUTPUT_ROOT) \
+		--comparison $(BENCHMARK_OUTPUT_ROOT)/baseline-comparison.json \
+		--output-json $(BENCHMARK_OUTPUT_ROOT)/perf-dashboard/data.json \
+		--output-html $(BENCHMARK_OUTPUT_ROOT)/perf-dashboard/index.html
 
 baseline-update-release:
 	./utils/update_perf_baseline.py \

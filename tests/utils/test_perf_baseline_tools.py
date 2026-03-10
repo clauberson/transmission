@@ -21,14 +21,15 @@ def load_module(name: str, relpath: str):
 
 COMPARE = load_module("perf_compare_baseline", "utils/perf_compare_baseline.py")
 UPDATE = load_module("update_perf_baseline", "utils/update_perf_baseline.py")
+DASHBOARD = load_module("perf_dashboard", "utils/perf_dashboard.py")
 
 
 class PerfBaselineToolingTests(unittest.TestCase):
     def test_extract_metrics_from_summary(self) -> None:
         summary = {
             "runs": [
-                {"scenario": "A", "download_bps": 100.0, "upload_bps": 20.0, "cpu_avg": 3.0, "cpu_peak": 4.0, "rss_avg": 5.0, "rss_peak": 6.0},
-                {"scenario": "D", "download_bps": 200.0, "upload_bps": 40.0, "cpu_avg": 7.0, "cpu_peak": 8.0, "rss_avg": 9.0, "rss_peak": 10.0},
+                {"scenario": "A", "download_bps": 100.0, "upload_bps": 20.0, "latency_ms": 10.0, "cpu_avg": 3.0, "cpu_peak": 4.0, "rss_avg": 5.0, "rss_peak": 6.0},
+                {"scenario": "D", "download_bps": 200.0, "upload_bps": 40.0, "latency_ms": 30.0, "cpu_avg": 7.0, "cpu_peak": 8.0, "rss_avg": 9.0, "rss_peak": 10.0},
             ]
         }
         metrics = UPDATE.extract_metrics(summary)
@@ -89,6 +90,28 @@ class PerfBaselineToolingTests(unittest.TestCase):
             UPDATE.update_moving_average(args=args, baseline_root=baseline_root, summary=summary, metrics=metrics)
             updated = COMPARE.load_json(existing)
             self.assertEqual(updated["sampled_commits"], ["commit-2", "commit-1"])
+
+    def test_dashboard_builds_distribution_and_alerts(self) -> None:
+        summaries = [
+            {
+                "generated_at": "2026-01-01T00:00:00Z",
+                "metadata": {"branch": "main", "hardware_profile": "x86"},
+                "runs": [
+                    {"scenario": "A", "download_bps": 100.0, "latency_ms": 10.0, "cpu_avg": 2.0, "cpu_peak": 3.0, "rss_avg": 4.0, "rss_peak": 5.0}
+                ],
+            },
+            {
+                "generated_at": "2026-01-02T00:00:00Z",
+                "metadata": {"branch": "main", "hardware_profile": "x86"},
+                "runs": [
+                    {"scenario": "A", "download_bps": 120.0, "latency_ms": 11.0, "cpu_avg": 2.2, "cpu_peak": 3.2, "rss_avg": 4.2, "rss_peak": 5.2}
+                ],
+            },
+        ]
+        comparison = {"comparison": {"primary": {"totals": {"Info": 1, "Warn": 2, "Critical": 3}, "rows": []}, "secondary": {"totals": {"Info": 1, "Warn": 0, "Critical": 0}, "rows": []}}}
+        dataset = DASHBOARD.build_dataset(summaries, comparison)
+        self.assertTrue(any(d["kpi"] == "latency_ms" for d in dataset["distributions"]))
+        self.assertEqual(dataset["severity_totals"]["Critical"], 3)
 
 
 if __name__ == "__main__":
