@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "baseline_kind": "moving_average_main",
+  "branch": "main",
+  "window": 10,
+  "updated_at": "2026-03-07T00:00:00Z",
+  "sampled_commits": [
+    "c9b8c5e42c75695a38e92cc8f126f3d30580a101",
+    "6d07e64f34889ec4fabdc8a644f0a251d5af4f52",
+    "d0ef3ca61b1012c2f2f56f97f4e24f8f64d8dede"
+  ],
+  "metrics": {
+    "A": {
+      "download_bps": 36360000,
+      "upload_bps": 9036000,
+      "cpu_avg": 7.95,
+      "cpu_peak": 11.85,
+      "rss_avg": 804000000,
+      "rss_peak": 924000000
+    },
+    "B": {
+      "download_bps": 72720000,
+      "upload_bps": 18072000,
+      "cpu_avg": 15.9,
+      "cpu_peak": 23.7,
+      "rss_avg": 1608000000,
+      "rss_peak": 1848000000
+    },
+    "C": {
+      "download_bps": 109080000,
+      "upload_bps": 27108000,
+      "cpu_avg": 23.85,
+      "cpu_peak": 35.55,
+      "rss_avg": 2412000000,
+      "rss_peak": 2772000000
+    },
+    "D": {
+      "download_bps": 145440000,
+      "upload_bps": 36144000,
+      "cpu_avg": 31.8,
+      "cpu_peak": 47.4,
+      "rss_avg": 3216000000,
+      "rss_peak": 3696000000
+    }
+  }
+}

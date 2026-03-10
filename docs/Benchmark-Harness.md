@@ -144,6 +144,65 @@ Workflow: `.github/workflows/benchmark-harness.yml`
   - `mode=smoke` → `make benchmark-smoke`
   - `mode=full` → `make benchmark-full`
 
+
+## Baseline versionado de performance
+
+Diretório raiz: `perf-baseline/`
+
+- `perf-baseline/manifest.json`: resolve baseline **primário** (último release estável) e **secundário** (média móvel da `main`).
+- `perf-baseline/releases/<tag>.json`: baseline por release com rastreabilidade de tag e commit.
+- `perf-baseline/main/moving-average.json`: baseline secundário da branch `main`.
+
+### Atualização com trilha de auditoria
+
+Script: `utils/update_perf_baseline.py`
+
+Campos obrigatórios de auditoria:
+
+- `--author`
+- `--reason`
+- `--commit`
+
+Exemplo para release:
+
+```bash
+make baseline-update-release \
+  PERF_BASELINE_RELEASE=v4.0.7 \
+  PERF_BASELINE_COMMIT=<sha> \
+  PERF_BASELINE_AUTHOR="nome" \
+  PERF_BASELINE_REASON="release estável"
+```
+
+Exemplo para média móvel da `main`:
+
+```bash
+make baseline-update-main \
+  PERF_BASELINE_COMMIT=<sha> \
+  PERF_BASELINE_AUTHOR="nome" \
+  PERF_BASELINE_REASON="atualização periódica"
+```
+
+### Comparação automática no pipeline
+
+Script: `utils/perf_compare_baseline.py`
+
+- Lê `perf-baseline/manifest.json`.
+- Resolve baseline primário/secundário automaticamente.
+- Compara o `artifacts/summary.json` contra ambos e grava `artifacts/baseline-comparison.json`.
+
+No workflow de benchmark (`.github/workflows/benchmark-harness.yml`) essa comparação roda após o benchmark.
+
+### Bloqueio contra atualização acidental em PR
+
+Workflow: `.github/workflows/perf-baseline-guard.yml`
+
+Quando houver mudança em `perf-baseline/**`, o PR só passa se:
+
+1. contiver label `perf-baseline-approved`; e
+2. tiver ao menos 1 review com estado `APPROVED`.
+
+Isso força um fluxo explícito de aprovação para qualquer alteração de baseline.
+
 ## Códigos de erro distintos
 
 - `2`: argumentos inválidos

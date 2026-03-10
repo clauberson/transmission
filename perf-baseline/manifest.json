@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "primary": {
+    "type": "release",
+    "latest_stable": "v4.0.6",
+    "path": "releases/v4.0.6.json"
+  },
+  "secondary": {
+    "type": "moving_average_main",
+    "window": 10,
+    "path": "main/moving-average.json"
+  }
+}

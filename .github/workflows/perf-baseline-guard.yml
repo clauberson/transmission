@@ -1,0 +1,70 @@
+name: Perf Baseline Guard
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'perf-baseline/**'
+      - '.github/workflows/perf-baseline-guard.yml'
+
+jobs:
+  validate-baseline-change:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Ensure explicit approval flow for baseline updates
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const requiredLabel = 'perf-baseline-approved';
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.setFailed('Evento sem pull request.');
+              return;
+            }
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100,
+            });
+
+            const baselineFiles = files.filter((file) => file.filename.startsWith('perf-baseline/'));
+            if (baselineFiles.length === 0) {
+              core.info('Sem alterações em perf-baseline/.');
+              return;
+            }
+
+            const labels = (pr.labels || []).map((label) => label.name);
+            const hasLabel = labels.includes(requiredLabel);
+
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100,
+            });
+
+            const approvals = new Map();
+            for (const review of reviews) {
+              if (!review.user?.login) {
+                continue;
+              }
+              approvals.set(review.user.login, review.state);
+            }
+            const approvedBy = [...approvals.entries()]
+              .filter(([, state]) => state === 'APPROVED')
+              .map(([login]) => login);
+
+            if (!hasLabel || approvedBy.length === 0) {
+              core.setFailed(
+                `Alterações em perf-baseline/ exigem label '${requiredLabel}' e pelo menos 1 review APPROVED. ` +
+                `Label presente: ${hasLabel}. Aprovadores: ${approvedBy.join(', ') || 'nenhum'}.`,
+              );
+              return;
+            }
+
+            core.info(
+              `Baseline alterado com fluxo explícito validado. Label: ${requiredLabel}. ` +
+              `Aprovadores: ${approvedBy.join(', ')}. Arquivos: ${baselineFiles.map((f) => f.filename).join(', ')}`,
+            );
