@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "baseline_kind": "release",
+  "release": "v4.0.6",
+  "commit": "6f2f6ca9b12f6b934f88f0fca0b8ed7ad6e6d9fd",
+  "generated_at": "2026-03-07T00:00:00Z",
+  "source": {
+    "workflow": "benchmark-harness",
+    "run_id": "release-v4.0.6",
+    "summary_path": "artifacts/summary.json"
+  },
+  "metrics": {
+    "A": {
+      "download_bps": 36000000,
+      "upload_bps": 9000000,
+      "cpu_avg": 8.0,
+      "cpu_peak": 12.0,
+      "rss_avg": 800000000,
+      "rss_peak": 920000000
+    },
+    "B": {
+      "download_bps": 72000000,
+      "upload_bps": 18000000,
+      "cpu_avg": 16.0,
+      "cpu_peak": 24.0,
+      "rss_avg": 1600000000,
+      "rss_peak": 1840000000
+    },
+    "C": {
+      "download_bps": 108000000,
+      "upload_bps": 27000000,
+      "cpu_avg": 24.0,
+      "cpu_peak": 36.0,
+      "rss_avg": 2400000000,
+      "rss_peak": 2760000000
+    },
+    "D": {
+      "download_bps": 144000000,
+      "upload_bps": 36000000,
+      "cpu_avg": 32.0,
+      "cpu_peak": 48.0,
+      "rss_avg": 3200000000,
+      "rss_peak": 3680000000
+    }
+  }
+}
