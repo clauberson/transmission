@@ -8,10 +8,11 @@ import math
 from pathlib import Path
 from typing import Any
 
-METRIC_KEYS = ("download_bps", "upload_bps", "cpu_avg", "cpu_peak", "rss_avg", "rss_peak")
+METRIC_KEYS = ("download_bps", "upload_bps", "latency_ms", "cpu_avg", "cpu_peak", "rss_avg", "rss_peak")
 DEFAULT_RULES: dict[str, dict[str, Any]] = {
     "download_bps": {"direction": "higher_is_better", "warn_percent": 3.0, "critical_percent": 7.0, "alpha_warn": 0.10, "alpha_critical": 0.05},
     "upload_bps": {"direction": "higher_is_better", "warn_percent": 3.0, "critical_percent": 7.0, "alpha_warn": 0.10, "alpha_critical": 0.05},
+    "latency_ms": {"direction": "lower_is_better", "warn_percent": 3.0, "critical_percent": 7.0, "alpha_warn": 0.10, "alpha_critical": 0.05},
     "cpu_avg": {"direction": "lower_is_better", "warn_percent": 3.0, "critical_percent": 7.0, "alpha_warn": 0.10, "alpha_critical": 0.05},
     "cpu_peak": {"direction": "lower_is_better", "warn_percent": 3.0, "critical_percent": 7.0, "alpha_warn": 0.10, "alpha_critical": 0.05},
     "rss_avg": {"direction": "lower_is_better", "warn_percent": 3.0, "critical_percent": 7.0, "alpha_warn": 0.10, "alpha_critical": 0.05},

@@ -127,6 +127,12 @@ make benchmark-smoke
 make benchmark-full
 ```
 
+- Dashboard consolidado (fonte + HTML):
+
+```bash
+make benchmark-dashboard
+```
+
 Variáveis úteis:
 
 - `BENCHMARK_N`
@@ -197,6 +203,20 @@ Script: `utils/perf_compare_baseline.py`
   - `artifacts/baseline-comparison.md`
 
 No workflow de benchmark (`.github/workflows/benchmark-harness.yml`) essa comparação roda após o benchmark.
+
+## Dashboard de performance por cenário/KPI
+
+Script: `utils/perf_dashboard.py`
+
+- Consolida os artefatos de benchmark (`**/summary.json`) em uma fonte única (`artifacts/perf-dashboard/data.json`).
+- Publica dashboard estático (`artifacts/perf-dashboard/index.html`) com:
+  - painéis para throughput, latência, CPU e memória;
+  - distribuição por KPI (mediana, IQR, P95, P99);
+  - tendência por cenário/KPI;
+  - comparação baseline vs branch com alertas visuais `Info`/`Warn`/`Critical`;
+  - filtros por `branch` e `hardware_profile`.
+
+No workflow `.github/workflows/benchmark-harness.yml`, o dashboard é atualizado automaticamente após cada execução do benchmark.
 
 ### Bloqueio contra atualização acidental em PR
 

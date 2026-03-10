@@ -34,6 +34,8 @@ DEFAULT_PHASE_SECONDS = {
     "full": {"warmup": 300, "measure": 1200},
 }
 
+METRIC_KEYS = ("download_bps", "upload_bps", "latency_ms", "cpu_avg", "cpu_peak", "rss_avg", "rss_peak")
+
 
 @dataclasses.dataclass
 class PhaseResult:
@@ -51,6 +53,10 @@ class RunResult:
     n: int
     seed: int
     phases: list[PhaseResult]
+    branch: str
+    commit: str
+    release: str
+    hardware_profile: str
 
 
 def parse_args() -> argparse.Namespace:
@@ -74,16 +80,21 @@ def parse_args() -> argparse.Namespace:
             "n=int(os.environ['TR_BENCH_N']);"
             "time.sleep(min(d,2));"
             "m={'download_bps': n*180000*f*(1+random.uniform(-0.03,0.03)),'upload_bps': n*45000*f*(1+random.uniform(-0.03,0.03)),"
+            "'latency_ms': 20.0*f*(1+random.uniform(-0.08,0.08)),"
             "'cpu_avg':8.0*f+random.uniform(-0.4,0.4),'cpu_peak':12.0*f+random.uniform(-0.8,0.8),"
             "'rss_avg': n*4000000*f,'rss_peak': n*4600000*f};"
             "print(json.dumps(m))\""
         ),
         help=(
             "Command run for each phase. It must print one JSON object to stdout with keys: "
-            "download_bps, upload_bps, cpu_avg, cpu_peak, rss_avg, rss_peak"
+            "download_bps, upload_bps, latency_ms, cpu_avg, cpu_peak, rss_avg, rss_peak"
         ),
     )
     parser.add_argument("--phase-timeout-seconds", type=int, default=1800, help="Timeout per phase")
+    parser.add_argument("--branch", default=os.environ.get("GITHUB_REF_NAME", "unknown"), help="Branch associada ao benchmark")
+    parser.add_argument("--commit", default=os.environ.get("GITHUB_SHA", "unknown"), help="Commit associada ao benchmark")
+    parser.add_argument("--release", default="", help="Release/tag associada ao benchmark (opcional)")
+    parser.add_argument("--hardware-profile", default="default", help="Perfil de hardware usado no benchmark")
     parser.add_argument("--tc-netem-script", default="./utils/tc_netem_profiles.py", help="Script used to apply tc/netem profiles")
     parser.add_argument("--scenario-d-netem-profile", choices=["profile_1", "profile_2", "profile_3"], help="Apply tc/netem profile only for scenario D")
     parser.add_argument("--tc-interface", help="Network interface used by tc/netem when scenario D profile is enabled")
@@ -153,20 +164,25 @@ def aggregate(run_results: list[RunResult], output_root: Path) -> dict[str, Any]
                 "scenario": run.scenario,
                 "run_id": run.run_id,
                 "network_profile": run.network_profile,
+                "branch": run.branch,
+                "commit": run.commit,
+                "release": run.release,
+                "hardware_profile": run.hardware_profile,
                 "N": run.n,
                 "seed": run.seed,
-                "download_bps": metrics.get("download_bps"),
-                "upload_bps": metrics.get("upload_bps"),
-                "cpu_avg": metrics.get("cpu_avg"),
-                "cpu_peak": metrics.get("cpu_peak"),
-                "rss_avg": metrics.get("rss_avg"),
-                "rss_peak": metrics.get("rss_peak"),
+                **{key: metrics.get(key) for key in METRIC_KEYS},
             }
         )
     return {
         "schema_version": 1,
         "generated_at": dt.datetime.now(dt.UTC).isoformat(),
         "output_root": str(output_root),
+        "metadata": {
+            "branch": run_results[0].branch if run_results else "unknown",
+            "commit": run_results[0].commit if run_results else "unknown",
+            "release": run_results[0].release if run_results else "",
+            "hardware_profile": run_results[0].hardware_profile if run_results else "default",
+        },
         "runs": summary_runs,
     }
 
@@ -294,6 +310,10 @@ def main() -> int:
             "scenario": scenario,
             "run_id": run_id,
             "network_profile": args.network_profile,
+            "branch": args.branch,
+            "commit": args.commit,
+            "release": args.release,
+            "hardware_profile": args.hardware_profile,
             "N": scenario_n,
             "seed": args.seed,
             "phases": [dataclasses.asdict(phase) for phase in phases],
@@ -310,6 +330,10 @@ def main() -> int:
                 n=scenario_n,
                 seed=args.seed,
                 phases=phases,
+                branch=args.branch,
+                commit=args.commit,
+                release=args.release,
+                hardware_profile=args.hardware_profile,
             )
         )
 

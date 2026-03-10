@@ -42,6 +42,13 @@
       "critical_percent": 7.0,
       "alpha_warn": 0.1,
       "alpha_critical": 0.05
+    },
+    "latency_ms": {
+      "direction": "lower_is_better",
+      "warn_percent": 3.0,
+      "critical_percent": 7.0,
+      "alpha_warn": 0.1,
+      "alpha_critical": 0.05
     }
   }
 }

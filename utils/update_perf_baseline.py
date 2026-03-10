@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-METRIC_KEYS = ("download_bps", "upload_bps", "cpu_avg", "cpu_peak", "rss_avg", "rss_peak")
+METRIC_KEYS = ("download_bps", "upload_bps", "latency_ms", "cpu_avg", "cpu_peak", "rss_avg", "rss_peak")
 
 
 def parse_args() -> argparse.Namespace:

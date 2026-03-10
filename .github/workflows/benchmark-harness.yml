@@ -19,6 +19,7 @@ on:
       - '.github/workflows/benchmark-harness.yml'
       - 'docs/Benchmark-Harness.md'
       - 'utils/perf_compare_baseline.py'
+      - 'utils/perf_dashboard.py'
       - 'utils/update_perf_baseline.py'
       - 'perf-baseline/**'
 
@@ -39,7 +40,10 @@ jobs:
         run: make benchmark-full
 
       - name: Compare with versioned baseline
-        run: ./utils/perf_compare_baseline.py --summary artifacts/summary.json --baseline-root perf-baseline --output artifacts/baseline-comparison.json
+        run: ./utils/perf_compare_baseline.py --summary artifacts/summary.json --baseline-root perf-baseline --output-json artifacts/baseline-comparison.json --output-md artifacts/baseline-comparison.md
+
+      - name: Build performance dashboard
+        run: ./utils/perf_dashboard.py --artifacts-root artifacts --comparison artifacts/baseline-comparison.json --output-json artifacts/perf-dashboard/data.json --output-html artifacts/perf-dashboard/index.html
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
