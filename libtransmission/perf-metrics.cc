@@ -65,12 +65,24 @@ constexpr auto DefaultInterval = std::chrono::seconds{ 5 };
     {
         switch (ch)
         {
-        case '"': out += "\\\""; break;
-        case '\\': out += "\\\\"; break;
-        case '\n': out += "\\n"; break;
-        case '\r': out += "\\r"; break;
-        case '\t': out += "\\t"; break;
-        default: out += ch; break;
+        case '"':
+            out += "\\\"";
+            break;
+        case '\\':
+            out += "\\\\";
+            break;
+        case '\n':
+            out += "\\n";
+            break;
+        case '\r':
+            out += "\\r";
+            break;
+        case '\t':
+            out += "\\t";
+            break;
+        default:
+            out += ch;
+            break;
         }
     }
 
@@ -81,7 +93,9 @@ class PerfMetrics final : public tr_perf_metrics
 {
 public:
     explicit PerfMetrics(tr_session const& session)
-        : output_path_{ tr_env_get_string("TR_PERF_METRICS_OUTPUT_FILE", tr_pathbuf{ session.configDir(), "/perf-metrics.jsonl"sv }) }
+        : output_path_{ tr_env_get_string(
+              "TR_PERF_METRICS_OUTPUT_FILE",
+              tr_pathbuf{ session.configDir(), "/perf-metrics.jsonl"sv }) }
         , scenario_id_{ tr_env_get_string("TR_PERF_METRICS_SCENARIO_ID", "default") }
         , run_id_{ tr_env_get_string("TR_PERF_METRICS_RUN_ID", "run-0") }
         , commit_sha_{ tr_env_get_string("TR_PERF_METRICS_COMMIT_SHA", "unknown") }
@@ -145,7 +159,9 @@ public:
         }
     }
 
-    void on_main_loop_tick(std::chrono::system_clock::time_point const now, std::chrono::steady_clock::time_point const now_steady) override
+    void on_main_loop_tick(
+        std::chrono::system_clock::time_point const now,
+        std::chrono::steady_clock::time_point const now_steady) override
     {
         if (last_loop_tick_)
         {

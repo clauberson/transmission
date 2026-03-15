@@ -72,6 +72,7 @@
 tr_peer_id_t tr_peerIdInit();
 
 class tr_peer_socket;
+class tr_perf_metrics;
 struct tr_pex;
 struct tr_torrent;
 struct struct_utp_context;

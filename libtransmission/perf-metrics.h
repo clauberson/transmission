@@ -26,6 +26,8 @@ public:
     virtual void on_request_sent(tr_torrent_id_t tor_id, tr_piece_index_t piece, tr_block_span_t span) = 0;
     virtual void on_block_received(tr_torrent_id_t tor_id, tr_block_index_t block) = 0;
     virtual void on_piece_completed(tr_torrent_id_t tor_id, tr_piece_index_t piece) = 0;
-    virtual void on_main_loop_tick(std::chrono::system_clock::time_point now, std::chrono::steady_clock::time_point now_steady) = 0;
+    virtual void on_main_loop_tick(
+        std::chrono::system_clock::time_point now,
+        std::chrono::steady_clock::time_point now_steady) = 0;
     virtual void flush(std::chrono::system_clock::time_point now) = 0;
 };
