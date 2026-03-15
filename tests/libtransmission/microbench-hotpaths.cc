@@ -205,13 +205,14 @@ std::vector<Sample> run_benchmark(std::function<void()> const& fn, size_t repeat
         stats.enabled.store(false, std::memory_order_relaxed);
 
         auto const elapsed_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-        samples.emplace_back(Sample{
-            .ns_per_op = static_cast<double>(elapsed_ns) / static_cast<double>(iterations),
-            .allocs_per_op = static_cast<double>(stats.allocs.load(std::memory_order_relaxed)) /
-                static_cast<double>(iterations),
-            .bytes_per_op = static_cast<double>(stats.bytes.load(std::memory_order_relaxed)) /
-                static_cast<double>(iterations),
-        });
+        samples.emplace_back(
+            Sample{
+                .ns_per_op = static_cast<double>(elapsed_ns) / static_cast<double>(iterations),
+                .allocs_per_op = static_cast<double>(stats.allocs.load(std::memory_order_relaxed)) /
+                    static_cast<double>(iterations),
+                .bytes_per_op = static_cast<double>(stats.bytes.load(std::memory_order_relaxed)) /
+                    static_cast<double>(iterations),
+            });
     }
 
     return samples;
@@ -275,7 +276,12 @@ Result summarize(std::string name, std::vector<Sample> const& samples)
     };
 }
 
-void write_summary(std::string const& output, std::string const& commit, size_t repeats, size_t iterations, std::vector<Result> const& results)
+void write_summary(
+    std::string const& output,
+    std::string const& commit,
+    size_t repeats,
+    size_t iterations,
+    std::vector<Result> const& results)
 {
     auto out = std::ostringstream{};
     out << "{\n";
@@ -291,10 +297,9 @@ void write_summary(std::string const& output, std::string const& commit, size_t 
         out << "      \"name\": \"" << result.name << "\",\n";
         out << "      \"ns_per_op\": { \"mean\": " << std::fixed << std::setprecision(4) << result.ns_mean
             << ", \"stddev\": " << result.ns_stddev << " },\n";
-        out << "      \"allocations_per_op\": { \"mean\": " << result.allocs_mean << ", \"stddev\": "
-            << result.allocs_stddev << " },\n";
-        out << "      \"bytes_per_op\": { \"mean\": " << result.bytes_mean << ", \"stddev\": " << result.bytes_stddev
-            << " }\n";
+        out << "      \"allocations_per_op\": { \"mean\": " << result.allocs_mean << ", \"stddev\": " << result.allocs_stddev
+            << " },\n";
+        out << "      \"bytes_per_op\": { \"mean\": " << result.bytes_mean << ", \"stddev\": " << result.bytes_stddev << " }\n";
         out << "    }" << (i + 1U < std::size(results) ? "," : "") << "\n";
     }
 
@@ -357,10 +362,11 @@ int main(int argc, char** argv)
     auto wishlist = Wishlist{ mediator };
     auto peer_seed = uint64_t{ 0xC0FFEE1234ULL };
     auto piece_picker_samples = run_benchmark(
-        [&wishlist, &peer_seed]() {
+        [&wishlist, &peer_seed]()
+        {
             auto const peer_mask = xorshift64(peer_seed);
             auto spans = wishlist.next(64, [peer_mask](tr_piece_index_t piece) { return ((piece + peer_mask) % 3U) != 0U; });
-            volatile size_t sink = std::size(spans);
+            size_t volatile sink = std::size(spans);
             (void)sink;
         },
         repeats,
@@ -384,9 +390,10 @@ int main(int argc, char** argv)
         flags.push_back(static_cast<uint8_t>(i % 8U));
     }
     auto peer_samples = run_benchmark(
-        [&compact, &flags]() {
+        [&compact, &flags]()
+        {
             auto pex = tr_pex::from_compact_ipv4(std::data(compact), std::size(compact), std::data(flags), std::size(flags));
-            volatile bool sink = pex.front().is_valid_for_peers(TR_PEER_FROM_PEX);
+            bool volatile sink = pex.front().is_valid_for_peers(TR_PEER_FROM_PEX);
             (void)sink;
         },
         repeats,
@@ -395,7 +402,8 @@ int main(int argc, char** argv)
 
     // buffer management path
     auto buffer_samples = run_benchmark(
-        []() {
+        []()
+        {
             auto buf = tr::StackBuffer<1024U>{};
             for (uint32_t i = 0; i < 256U; ++i)
             {
@@ -408,7 +416,7 @@ int main(int argc, char** argv)
                 sum += buf.to_uint32();
             }
 
-            volatile uint64_t sink = sum;
+            uint64_t volatile sink = sum;
             (void)sink;
         },
         repeats,
@@ -422,9 +430,10 @@ int main(int argc, char** argv)
         payload[i] = static_cast<char>(i % 251U);
     }
     auto crypto_samples = run_benchmark(
-        [&payload]() {
+        [&payload]()
+        {
             auto digest = tr_sha1::digest(payload);
-            volatile auto sink = digest[0];
+            auto volatile sink = digest[0];
             (void)sink;
         },
         repeats,
@@ -432,10 +441,12 @@ int main(int argc, char** argv)
     results.emplace_back(summarize("crypto.sha1_16k", crypto_samples));
 
     // frequent RPC path: JSON parse + method lookup
-    auto const request_json =
-        std::string{ R"({\"method\":\"torrent-get\",\"arguments\":{\"fields\":[\"id\",\"name\",\"status\"],\"ids\":[1,2,3,4,5],\"format\":\"objects\"},\"tag\":17})" };
+    auto const request_json = std::string{
+        R"({\"method\":\"torrent-get\",\"arguments\":{\"fields\":[\"id\",\"name\",\"status\"],\"ids\":[1,2,3,4,5],\"format\":\"objects\"},\"tag\":17})"
+    };
     auto rpc_samples = run_benchmark(
-        [&request_json]() {
+        [&request_json]()
+        {
             auto parsed = tr_variant_serde::json().parse(request_json);
             if (!parsed)
             {
@@ -449,7 +460,7 @@ int main(int argc, char** argv)
             }
 
             auto method = map->value_if<std::string_view>(TR_KEY_method).value_or(std::string_view{});
-            volatile auto sink = std::size(method);
+            auto volatile sink = std::size(method);
             (void)sink;
         },
         repeats,
